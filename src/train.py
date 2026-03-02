@@ -8,11 +8,31 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from preprocess import load_and_preprocess_data
 
+from sklearn.model_selection import GridSearchCV
+
 def train_and_evaluate(X_train, X_test, y_train, y_test, preprocessor):
     models = {
-        'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
-        'Decision Tree': DecisionTreeClassifier(random_state=42),
-        'MLP': MLPClassifier(max_iter=1000, random_state=42)
+        'Logistic Regression': {
+            'model': LogisticRegression(max_iter=1000, random_state=42),
+            'params': {
+                'classifier__C': [0.1, 1.0, 10.0],
+                'classifier__solver': ['lbfgs', 'liblinear']
+            }
+        },
+        'Decision Tree': {
+            'model': DecisionTreeClassifier(random_state=42),
+            'params': {
+                'classifier__max_depth': [3, 5, 10, None],
+                'classifier__min_samples_leaf': [1, 5, 10]
+            }
+        },
+        'MLP': {
+            'model': MLPClassifier(max_iter=1000, random_state=42),
+            'params': {
+                'classifier__hidden_layer_sizes': [(50,), (100,)],
+                'classifier__alpha': [0.0001, 0.001]
+            }
+        }
     }
     
     results = {}
@@ -20,20 +40,34 @@ def train_and_evaluate(X_train, X_test, y_train, y_test, preprocessor):
     # Ensure a directory exists for saving models
     os.makedirs('models', exist_ok=True)
     
-    for name, model in models.items():
-        print(f"Training {name}...")
+    for name, config in models.items():
+        print(f"Training and Tuning {name}...")
         
         # Create a full pipeline that includes the preprocessor and the model
-        full_pipeline = Pipeline(steps=[
+        base_pipeline = Pipeline(steps=[
             ('preprocessor', preprocessor),
-            ('classifier', model)
+            ('classifier', config['model'])
         ])
         
-        # Train
-        full_pipeline.fit(X_train, y_train)
+        # Set up GridSearchCV
+        grid_search = GridSearchCV(
+            estimator=base_pipeline,
+            param_grid=config['params'],
+            scoring='f1',
+            cv=3,
+            n_jobs=-1,
+            verbose=1
+        )
+        
+        # Train and tune
+        grid_search.fit(X_train, y_train)
+        
+        # Use the best pipeline found
+        best_pipeline = grid_search.best_estimator_
+        print(f"Best parameters for {name}: {grid_search.best_params_}")
         
         # Predict
-        y_pred = full_pipeline.predict(X_test)
+        y_pred = best_pipeline.predict(X_test)
         
         # Evaluate
         accuracy = accuracy_score(y_test, y_pred)
@@ -47,13 +81,14 @@ def train_and_evaluate(X_train, X_test, y_train, y_test, preprocessor):
             'Precision': precision,
             'Recall': recall,
             'F1': f1,
-            'Confusion_Matrix': cm
+            'Confusion_Matrix': cm,
+            'Best_Params': grid_search.best_params_
         }
         
-        # Save model
+        # Save best model
         filename = f"models/{name.replace(' ', '_').lower()}.joblib"
-        joblib.dump(full_pipeline, filename)
-        print(f"Saved to {filename}\\n")
+        joblib.dump(best_pipeline, filename)
+        print(f"Saved optimized model to {filename}\n")
         
     return results
     

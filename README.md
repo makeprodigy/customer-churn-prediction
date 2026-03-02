@@ -67,12 +67,19 @@ customer-churn-prediction/
 
 ---
 
-## 📊 Core Features
+## 📊 Core Features (3 Distinct Sub-Features)
 
-- **Data Preprocessing Pipeline:** Automated handling of missing values, encoding of categorical variables, and scaling of numeric features.
-- **Model Evaluation:** Compare performance metrics across Logistic Regression (Best Performing), Decision Trees, and MLPs directly within the app.
-- **Single Customer Prediction:** Input a specific customer's profile via sidebar widgets to instantly calculate their churn risk.
-- **Batch CSV Prediction:** Upload a dataset to generate bulk predictions. Includes a visual dashboard with churn proportion charts, probability distributions, and a filterable/downloadable results table.
+1. **Automated Scikit-Learn Preprocessing Pipeline:** Engineered a robust, leak-proof data pipeline combining `StandardScaler` for continuous numerical features and `OneHotEncoder` for categoricals, managed cleanly via a `ColumnTransformer`.
+2. **Real-time Single Customer Inference Engine:** An interactive prediction dashboard where agents can manually toggle 19 different customer profile metrics and instantly receive a calculated churn probability score alongside actionable business insights.
+3. **Batch Prediction Analytics Dashboard:** A bulk processing feature allowing users to upload CSV datasets. The system runs entire datasets through the inference engine and generates a dynamic dashboard featuring interactive bar charts, probability distrbution histograms, and a filterable/downloadable results table.
+
+---
+
+## ⚙️ Model Optimization
+To ensure the highest possible performance and to satisfy the project's optimization criteria, models were fine-tuned using `GridSearchCV` with 3-fold cross-validation. 
+- **Logistic Regression** was optimized over varying inverse regularization strengths (`C`) and solvers.
+- **Decision Trees** were constrained by optimizing `max_depth` and `min_samples_leaf` to prevent overfitting.
+- **MLPs** were tuned across hidden layer sizes and L2 penalty (`alpha`) parameters.
 
 ---
 
