@@ -42,37 +42,60 @@ with st.expander("📊 View Model Evaluation Metrics"):
     *Logistic Regression performed the best overall on this dataset.*
     """)
 
-# --- Prediction Mode Selection ---
-prediction_mode = st.radio("Select Prediction Mode", ["Single Customer (Manual Input)", "Batch Prediction (CSV Upload)"], horizontal=True)
-
-st.divider()
-
-selected_model_name = st.selectbox("Select Model for Prediction", list(models.keys()))
+# --- Prediction Models & Modes ---
+st.markdown("<br>", unsafe_allow_html=True)
+ctrl_col1, ctrl_col2 = st.columns(2)
+with ctrl_col1:
+    prediction_mode = st.radio("Select Prediction Mode", ["Single Customer (Manual Input)", "Batch Prediction (CSV Upload)"], horizontal=True)
+with ctrl_col2:
+    selected_model_name = st.selectbox("Select Model for Prediction", list(models.keys()))
 
 if prediction_mode == "Single Customer (Manual Input)":
-    # Sidebar for manual inputs
-    st.sidebar.header("Customer Profile")
+    st.subheader("👨‍💻 Customer Profile Builder")
+    st.markdown("Enter customer details below to get a real-time churn risk prediction.")
     
-    gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-    senior_citizen = st.sidebar.selectbox("Senior Citizen", ["0", "1"])
-    partner = st.sidebar.selectbox("Partner", ["Yes", "No"])
-    dependents = st.sidebar.selectbox("Dependents", ["Yes", "No"])
-    phone_service = st.sidebar.selectbox("Phone Service", ["Yes", "No"])
-    multiple_lines = st.sidebar.selectbox("Multiple Lines", ["No", "Yes", "No phone service"])
-    internet_service = st.sidebar.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
-    online_security = st.sidebar.selectbox("Online Security", ["No", "Yes", "No internet service"])
-    online_backup = st.sidebar.selectbox("Online Backup", ["Yes", "No", "No internet service"])
-    device_protection = st.sidebar.selectbox("Device Protection", ["No", "Yes", "No internet service"])
-    tech_support = st.sidebar.selectbox("Tech Support", ["No", "Yes", "No internet service"])
-    streaming_tv = st.sidebar.selectbox("Streaming TV", ["No", "Yes", "No internet service"])
-    streaming_movies = st.sidebar.selectbox("Streaming Movies", ["No", "Yes", "No internet service"])
-    contract = st.sidebar.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-    paperless_billing = st.sidebar.selectbox("Paperless Billing", ["Yes", "No"])
-    payment_method = st.sidebar.selectbox("Payment Method", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
+    col1, col2, col3 = st.columns(3)
     
-    tenure = st.sidebar.slider("Tenure (Months)", 0, 72, 12)
-    monthly_charges = st.sidebar.number_input("Monthly Charges ($)", min_value=0.0, max_value=200.0, value=50.0)
-    total_charges = st.sidebar.number_input("Total Charges ($)", min_value=0.0, max_value=10000.0, value=500.0)
+    with col1:
+        st.markdown("**Demographics**")
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        senior_citizen = st.selectbox("Senior Citizen", ["0", "1"])
+        partner = st.selectbox("Partner", ["Yes", "No"])
+        dependents = st.selectbox("Dependents", ["Yes", "No"])
+        
+    with col2:
+        st.markdown("**Services**")
+        phone_service = st.selectbox("Phone Service", ["Yes", "No"])
+        multiple_lines = st.selectbox("Multiple Lines", ["No", "Yes", "No phone service"])
+        internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+        streaming_tv = st.selectbox("Streaming TV", ["No", "Yes", "No internet service"])
+        streaming_movies = st.selectbox("Streaming Movies", ["No", "Yes", "No internet service"])
+        
+    with col3:
+        st.markdown("**Security & Tech**")
+        online_security = st.selectbox("Online Security", ["No", "Yes", "No internet service"])
+        online_backup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
+        device_protection = st.selectbox("Device Protection", ["No", "Yes", "No internet service"])
+        tech_support = st.selectbox("Tech Support", ["No", "Yes", "No internet service"])
+        
+    st.markdown("---")
+    st.markdown("**Account & Billing**")
+    
+    col4, col5, col6, col7 = st.columns(4)
+    with col4:
+        contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+    with col5:
+        paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
+    with col6:
+        payment_method = st.selectbox("Payment Method", ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"])
+    with col7:
+        tenure = st.slider("Tenure (Months)", 0, 72, 12)
+        
+    col_charge1, col_charge2 = st.columns(2)
+    with col_charge1:
+        monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, max_value=200.0, value=50.0)
+    with col_charge2:
+        total_charges = st.number_input("Total Charges ($)", min_value=0.0, max_value=10000.0, value=500.0)
     
     input_data = pd.DataFrame([{
         'gender': gender,
@@ -96,26 +119,33 @@ if prediction_mode == "Single Customer (Manual Input)":
         'TotalCharges': total_charges
     }])
     
-    st.subheader("Selected Customer Data")
-    st.dataframe(input_data)
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    if st.button("Predict Churn", type="primary"):
+    predict_col1, predict_col2 = st.columns([1, 2])
+    with predict_col1:
+        predict_button = st.button("Predict Churn", type="primary", use_container_width=True)
+        
+    with st.expander("View Input Data"):
+        st.dataframe(input_data, use_container_width=True)
+        
+    if predict_button:
         model = models[selected_model_name]
         try:
             prob = model.predict_proba(input_data)[0][1]
             pred = model.predict(input_data)[0]
             
-            col1, col2 = st.columns(2)
-            with col1:
+            st.markdown("### Prediction Result")
+            res_col1, res_col2 = st.columns(2)
+            with res_col1:
                 st.metric("Churn Probability", f"{prob:.2%}")
             
-            with col2:
+            with res_col2:
                 if pred == 1:
                     st.error("🚨 HIGH RISK of Churn")
                 else:
                     st.success("✅ LOW RISK of Churn")
             
-            st.info("Insights: Higher monthly charges and month-to-month contracts strongly drive churn (based on model coefficients).")
+            st.info("💡 Insights: Higher monthly charges and month-to-month contracts strongly drive churn (based on model coefficients).")
                     
         except Exception as e:
             st.error(f"Error during prediction: {str(e)}")
