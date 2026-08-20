@@ -1,6 +1,7 @@
 streamlit
-pandas
-scikit-learn
+pandas==2.3.3
+numpy==2.4.2
+scikit-learn==1.8.0
 matplotlib
 seaborn
 joblib
@@ -10,6 +11,6 @@ langchain-google-genai
 langchain-community
 langchain-text-splitters
 faiss-cpu
-imbalanced-learn
+imbalanced-learn==0.14.1
 python-dotenv
 tiktoken
